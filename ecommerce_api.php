@@ -36,7 +36,15 @@ if (preg_match('#^api/orders/?$#', $path)) {
         $totalStmt = $pdo->query("SELECT COUNT(*) FROM orders");
         $total = $totalStmt->fetchColumn();
         $totalPages = ceil($total / $limit);
-        $stmt = $pdo->prepare("SELECT id, user_id, number, status, total_amount, created_at FROM orders LIMIT ? OFFSET ?");
+
+        // Validate page number
+        if ($page > $totalPages && $total > 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Requested page exceeds total pages']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("SELECT id, user_id, number, status, total_amount, created_at FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?");
         $stmt->execute([$limit, $offset]);
         $response = [
             'data' => $stmt->fetchAll(),
@@ -149,7 +157,15 @@ if (preg_match('#^api/orders/?$#', $path)) {
         $totalStmt = $pdo->query("SELECT COUNT(*) FROM products WHERE is_deleted = FALSE");
         $total = $totalStmt->fetchColumn();
         $totalPages = ceil($total / $limit);
-        $stmt = $pdo->prepare("SELECT id, name, price, stock FROM products WHERE is_deleted = FALSE LIMIT ? OFFSET ?");
+
+        // Validate page number
+        if ($page > $totalPages && $total > 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Requested page exceeds total pages']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("SELECT id, name, price, stock FROM products WHERE is_deleted = FALSE ORDER BY id ASC LIMIT ? OFFSET ?");
         $stmt->execute([$limit, $offset]);
         $response = [
             'data' => $stmt->fetchAll(),
